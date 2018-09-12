@@ -34,8 +34,8 @@ namespace LNLamasAPI
             // options
             services.Configure((Settings options) =>
             {
-                options.ConnectionString = Configuration.GetSection("MongoConnection:ConnectionString").Value;
-                options.Database = Configuration.GetSection("MongoConnection:Database").Value;
+                options.ConnectionString = Configuration.GetSection("MongoRepository:ConnectionString").Value;
+                options.Database = Configuration.GetSection("MongoRepository:Database").Value;
             });
             services.AddTransient<IMongoRepository, MongoRepository>();
             // Register the Swagger generator, defining 1 or more Swagger documents

@@ -16,7 +16,7 @@ namespace LNLamasAPI.Controllers
     [ApiController]
     public class ChaptersController : ControllerBase
     {
-        public readonly IMongoRepository _repo;
+        readonly IMongoRepository _repo;
 
         public ChaptersController(IMongoRepository repo)
         {
@@ -29,39 +29,47 @@ namespace LNLamasAPI.Controllers
             return Ok(result);
         }
 
-        // GET: api/Chapters/5
+        [HttpGet("{chapterRef}")]
+        public async Task<IActionResult> Get(string chapterRef)
+        {
+            var result = await _repo.GetChaptersAsync(chapterRef);
+            return Ok(result);
+        }
+
         [Route("BySeries/{title}")]
         [HttpGet]
         public async Task<IActionResult> BySeries(string title)
         {
-            var result = await _repo.GetChaptersBySeriesTitleAsync(title);
+            var result = await _repo.GetChaptersBySeriesAsync(title);
             return Ok(result);
         }
-        //// GET: api/Chapters/5
-        [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+
+        [HttpPut("{chapters}")]
+        public async Task<IActionResult> Put(int id, [FromBody]List<Chapter> chapters)
         {
-            throw new NotImplementedException();
-        }
-        // POST: api/Chapters
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] string value)
-        {
-            throw new NotImplementedException();
+            try
+            {
+                await _repo.PutChaptersAsync(chapters);
+            }
+            catch
+            {
+                return BadRequest();
+            }
+            return Ok();
         }
 
-        // PUT: api/Chapters/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, [FromBody] string value)
+        [HttpDelete("{chapterRef}")]
+        public async Task<IActionResult> Delete(string chapterRef)
         {
-            throw new NotImplementedException();
-        }
-
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            throw new NotImplementedException();
+            try
+            {
+                await _repo.DeleteChapterAsync(chapterRef);
+            }
+            catch
+            {
+                return BadRequest();
+            }
+            return Ok();
         }
     }
 }

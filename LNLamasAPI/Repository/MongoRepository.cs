@@ -22,96 +22,55 @@ namespace LNLamasAPI.Repository
         {
             Context = new MongoContext(settings);
         }
+        #region Series
         public async Task<IEnumerable<ISeries>> GetSeriesAsync()
         {
             return await Context.SeriesLinq.ToListAsyncSafe();
         }
+        public async Task<ISeries> GetSeriesAsync(string title)
+        {
+            return Context.SeriesLinq.FirstOrDefault(d => d.Title == title);
+        }
+        public async Task PutSeriesAsync(List<Series> series)
+        {
+            var collection = Context.Database.GetCollection<Series>("Series");
+            //var models = new WriteModel<Series>[series.Count];
+            //for (var i = 0; i < series.Count; i++)
+            //{
+            //    var item = series[i];
+            //    models[i] = new ReplaceOneModel<Series>(
+            //            Builders<Series>.Filter.Where(x => x.Title == item.Title),
+            //            item
+            //        )
+            //    { IsUpsert = true };
+            //};
+            //await collection.BulkWriteAsync(models);
+            await collection.BulkWriteAsync(
+                series.Select(d => new ReplaceOneModel<Series>(
+                    Builders<Series>.Filter.Where(x => x.Title == d.Title), d)));
+
+        }
+        public async Task DeleteSeriesAsync(string title)
+        {
+            var collection = Context.Database.GetCollection<Series>("Series");
+            await collection.DeleteOneAsync(
+                Builders<Series>.Filter.Where(d => d.Title == title));
+        }
+        #endregion
+
+        #region Chapters
+
         public async Task<IEnumerable<IChapter>> GetChaptersAsync()
         {
             return await Context.ChaptersLinq.ToListAsyncSafe();
         }
-        public async Task<IEnumerable<IChapter>> GetChaptersBySeriesTitleAsync(string title)
+        public async Task<IChapter> GetChaptersAsync(string chapterRef)
         {
-            //var q = from s in Context.SeriesItems.AsQueryable()
-            //        join c in Context.ChaptersItems.AsQueryable()
-            //            on s.Title equals c.ParentSeriesTitle
-            //        select new
-            //        {
-            //            s = s,
-            //            c = c
-            //        };
-            return await Context.ChaptersLinq.Where(d => d.ParentRef == title)
-                .ToListAsyncSafe();
+            return Context.ChaptersLinq.FirstOrDefault(d => d.ChapterRef == chapterRef);
         }
-        public async Task<IEnumerable<IPage>> GetPagesAsync()
+        public async Task<IEnumerable<IChapter>> GetChaptersBySeriesAsync(string title)
         {
-            return await Context.PagesLinq.ToListAsyncSafe();
-        }
-
-        public async Task<IEnumerable<IPage>> GetPagesByChapterUri(string chapterUri)
-        {
-            return await Context.PagesLinq.Where(d => d.ParentRef == chapterUri)
-                .ToListAsyncSafe();
-        }
-
-
-
-        public async Task PutSeriesAsync(List<Series> series)
-        {
-            //var seriesDocuments = series.OrderBy(d => d.Title).Select(d => new BsonDocument()
-            //{
-            //    {"title", new BsonString(d.Title) },
-            //    {"seriesPageUri", new BsonString(d.SeriesPageUri.AbsoluteUri) },
-            //});
-
-
-
-            //var options = new UpdateOptions { IsUpsert = true };
-            //var filters = Builders<Series>.Filter.Where(x => x.Title == d.Title);
-            //var a = await collection.UpdateManyAsync(filter, update, options);
-            //var bw = await collection.BulkWriteAsync(
-            //    series.Select(d => new UpdateOneModel<Series>(
-            //            //x=>x.
-            //            Builders<Series>.Filter.Where(x => x.Title == d.Title),
-            //            Builders<Series>.Update.Set("", d)
-            //            )
-            //    { IsUpsert = true }
-            //));
-
-
-
-
-            //// create collection if doesn't exist
-            //if (!mongoContext.Database.ListCollectionNames().ToList().Any(x => x.Contains("Series")))
-            //{
-            //    mongoContext.Database.CreateCollection("Series");
-            //}
-
-            //var collection = mongoContext.Database.GetCollection<BsonDocument>("Series");
-            //// initialise write model to hold list of our upsert tasks
-            //var models = new WriteModel<BsonDocument>[series.Count];
-
-            //// use ReplaceOneModel with property IsUpsert set to true to upsert whole documents
-            //for (var i = 0; i < series.Count; i++)
-            //{
-            //    var bsonDoc = series[i].ToBsonDocument();
-            //    models[i] = new ReplaceOneModel<BsonDocument>(new BsonDocument("Title", series[i].Title), bsonDoc) { IsUpsert = true };
-            //};
-
-            //await collection.BulkWriteAsync(models);
-
-            var collection = Context.Database.GetCollection<Series>("Series");
-            var models = new WriteModel<Series>[series.Count];
-            for (var i = 0; i < series.Count; i++)
-            {
-                var item = series[i];
-                models[i] = new ReplaceOneModel<Series>(
-                    Builders<Series>.Filter.Where(x => x.Title == item.Title),
-                    item
-                    )
-                { IsUpsert = true };
-            };
-            await collection.BulkWriteAsync(models);
+            return await Context.ChaptersLinq.Where(d => d.ParentRef == title).ToListAsyncSafe();
         }
         public async Task PutChaptersAsync(List<Chapter> chapters)
         {
@@ -133,6 +92,28 @@ namespace LNLamasAPI.Repository
             await collection.BulkWriteAsync(models);
 
         }
+        public async Task DeleteChapterAsync(string chapterRef)
+        {
+            var collection = Context.Database.GetCollection<Chapter>("Chapters");
+            await collection.DeleteOneAsync(
+                Builders<Chapter>.Filter.Where(d => d.ChapterRef == chapterRef));
+        }
+        #endregion
+
+        #region Pages
+        public async Task<IEnumerable<IPage>> GetPagesAsync()
+        {
+            return await Context.PagesLinq.ToListAsyncSafe();
+        }
+        public async Task<IPage> GetPagesAsync(string pageRef)
+        {
+            return Context.PagesLinq.FirstOrDefault(d => d.PageRef == pageRef);
+        }
+        public async Task<IEnumerable<IPage>> GetPagesByChapterUri(string chapterUri)
+        {
+            return await Context.PagesLinq.Where(d => d.ParentRef == chapterUri)
+                .ToListAsyncSafe();
+        }
 
         public async Task PutPagesAsync(List<Page> pages)
         {
@@ -149,23 +130,12 @@ namespace LNLamasAPI.Repository
             };
             await collection.BulkWriteAsync(models);
         }
-        //public async Task UpdateDbPagesWithContentAsync(IReadOnlyList<IPage> pages)
-        //{
-        //    // download content for pages
-        //    var taskList = new List<Task>();
-        //    foreach (var i in pages)
-        //    {
-        //        taskList.Add(DownloadPageContent((Page)i));
-        //        taskList.Add(i.GetPageContentAsync());
-        //    }
-        //    Task.WaitAll(taskList.ToArray());
-        //    await PutPagesAsync(pages);
-        //}
-
-        //internal async Task DownloadPageContent(Page page)
-        //{
-        //    var res = await page.GetPageContentAsync();
-        //    page.PageContent = Encoding.UTF8.GetString(res);
-        //}
+        public async Task DeletePageAsync(string pageRef)
+        {
+            var collection = Context.Database.GetCollection<Page>("Pages");
+            await collection.DeleteOneAsync(
+                Builders<Page>.Filter.Where(d => d.PageRef == pageRef));
+        }
+        #endregion
     }
 }
