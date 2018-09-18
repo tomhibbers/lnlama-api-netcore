@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using LNLamasAPI.Models;
 using LNLamasAPI.Repository;
+using LNLamaScrape.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Bson;
@@ -40,12 +41,12 @@ namespace LNLamasAPI.Controllers
         [HttpGet]
         public async Task<IActionResult> ByChapter(string chapterUri)
         {
-            var result = await _repo.GetPagesByChapterUri(chapterUri);
+            var result = await _repo.GetPagesByChapter(chapterUri);
             return Ok(result);
         }
 
         [HttpPut("{pages}")]
-        public async Task<IActionResult> Put(int id, [FromBody]List<Page> pages)
+        public async Task<IActionResult> Put(int id, [FromBody]List<PageDto> pages)
         {
             try
             {

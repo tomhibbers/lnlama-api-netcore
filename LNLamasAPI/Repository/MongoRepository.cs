@@ -3,15 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using LNLamasAPI.Models;
 using LNLamasAPI.Tools;
 using LNLamaScrape.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
-using LNLamasAPI.Models;
-using Chapter = LNLamasAPI.Models.Chapter;
-using Page = LNLamasAPI.Models.Page;
-using Series = LNLamasAPI.Models.Series;
 
 namespace LNLamasAPI.Repository
 {
@@ -27,34 +24,35 @@ namespace LNLamasAPI.Repository
         {
             return await Context.SeriesLinq.ToListAsyncSafe();
         }
-        public async Task<ISeries> GetSeriesAsync(string title)
+        public async Task<ISeries> GetSeriesAsync(string id)
         {
-            return Context.SeriesLinq.FirstOrDefault(d => d.Title == title);
+            return Context.SeriesLinq.FirstOrDefault(d => d._id == id);
         }
-        public async Task PutSeriesAsync(List<Series> series)
+        public async Task PutSeriesAsync(List<SeriesDto> series)
         {
-            var collection = Context.Database.GetCollection<Series>("Series");
-            //var models = new WriteModel<Series>[series.Count];
-            //for (var i = 0; i < series.Count; i++)
-            //{
-            //    var item = series[i];
-            //    models[i] = new ReplaceOneModel<Series>(
-            //            Builders<Series>.Filter.Where(x => x.Title == item.Title),
-            //            item
-            //        )
-            //    { IsUpsert = true };
-            //};
-            //await collection.BulkWriteAsync(models);
-            await collection.BulkWriteAsync(
-                series.Select(d => new ReplaceOneModel<Series>(
-                    Builders<Series>.Filter.Where(x => x.Title == d.Title), d)));
+            if (!Context.Database.ListCollectionNames().ToList().Any(x => x.Contains("Series")))
+            {
+                Context.Database.CreateCollection("Series");
+            }
+            var collection = Context.Database.GetCollection<SeriesDto>("Series");
+            var models = new WriteModel<SeriesDto>[series.Count];
+            for (var i = 0; i < series.Count; i++)
+            {
+                var item = series[i];
+                models[i] = new ReplaceOneModel<SeriesDto>(
+                        Builders<SeriesDto>.Filter.Where(x => x._id == item._id),
+                        (SeriesDto)item
+                    )
+                    { IsUpsert = true };
+            };
+            await collection.BulkWriteAsync(models);
 
         }
-        public async Task DeleteSeriesAsync(string title)
+        public async Task DeleteSeriesAsync(string id)
         {
-            var collection = Context.Database.GetCollection<Series>("Series");
+            var collection = Context.Database.GetCollection<SeriesDto>("Series");
             await collection.DeleteOneAsync(
-                Builders<Series>.Filter.Where(d => d.Title == title));
+                Builders<SeriesDto>.Filter.Where(d => d._id == id));
         }
         #endregion
 
@@ -64,39 +62,39 @@ namespace LNLamasAPI.Repository
         {
             return await Context.ChaptersLinq.ToListAsyncSafe();
         }
-        public async Task<IChapter> GetChaptersAsync(string chapterRef)
+        public async Task<IChapter> GetChaptersAsync(string id)
         {
-            return Context.ChaptersLinq.FirstOrDefault(d => d.ChapterRef == chapterRef);
+            return Context.ChaptersLinq.FirstOrDefault(d => d._id == id);
         }
-        public async Task<IEnumerable<IChapter>> GetChaptersBySeriesAsync(string title)
+        public async Task<IEnumerable<IChapter>> GetChaptersBySeriesAsync(string id)
         {
-            return await Context.ChaptersLinq.Where(d => d.ParentRef == title).ToListAsyncSafe();
+            return await Context.ChaptersLinq.Where(d => d.ParentRef == id).ToListAsyncSafe();
         }
-        public async Task PutChaptersAsync(List<Chapter> chapters)
+        public async Task PutChaptersAsync(List<ChapterDto> chapters)
         {
             if (!Context.Database.ListCollectionNames().ToList().Any(x => x.Contains("Chapters")))
             {
                 Context.Database.CreateCollection("Chapters");
             }
-            var collection = Context.Database.GetCollection<Chapter>("Chapters");
-            var models = new WriteModel<Chapter>[chapters.Count];
+            var collection = Context.Database.GetCollection<ChapterDto>("Chapters");
+            var models = new WriteModel<ChapterDto>[chapters.Count];
             for (var i = 0; i < chapters.Count; i++)
             {
                 var item = chapters[i];
-                models[i] = new ReplaceOneModel<Chapter>(
-                        Builders<Chapter>.Filter.Where(x => x.FirstPageUri == item.FirstPageUri),
-                        item
+                models[i] = new ReplaceOneModel<ChapterDto>(
+                        Builders<ChapterDto>.Filter.Where(x => x._id == item._id),
+                        (ChapterDto)item
                     )
                 { IsUpsert = true };
             };
             await collection.BulkWriteAsync(models);
 
         }
-        public async Task DeleteChapterAsync(string chapterRef)
+        public async Task DeleteChapterAsync(string id)
         {
-            var collection = Context.Database.GetCollection<Chapter>("Chapters");
+            var collection = Context.Database.GetCollection<ChapterDto>("Chapters");
             await collection.DeleteOneAsync(
-                Builders<Chapter>.Filter.Where(d => d.ChapterRef == chapterRef));
+                Builders<ChapterDto>.Filter.Where(d => d._id == id));
         }
         #endregion
 
@@ -105,36 +103,36 @@ namespace LNLamasAPI.Repository
         {
             return await Context.PagesLinq.ToListAsyncSafe();
         }
-        public async Task<IPage> GetPagesAsync(string pageRef)
+        public async Task<IPage> GetPagesAsync(string id)
         {
-            return Context.PagesLinq.FirstOrDefault(d => d.PageRef == pageRef);
+            return Context.PagesLinq.FirstOrDefault(d => d._id == id);
         }
-        public async Task<IEnumerable<IPage>> GetPagesByChapterUri(string chapterUri)
+        public async Task<IEnumerable<IPage>> GetPagesByChapter(string id)
         {
-            return await Context.PagesLinq.Where(d => d.ParentRef == chapterUri)
+            return await Context.PagesLinq.Where(d => d.ParentRef == id)
                 .ToListAsyncSafe();
         }
 
-        public async Task PutPagesAsync(List<Page> pages)
+        public async Task PutPagesAsync(List<PageDto> pages)
         {
-            var collection = Context.Database.GetCollection<Page>("Pages");
-            var models = new WriteModel<Page>[pages.Count];
+            var collection = Context.Database.GetCollection<PageDto>("Pages");
+            var models = new WriteModel<PageDto>[pages.Count];
             for (var i = 0; i < pages.Count; i++)
             {
                 var item = pages[i];
-                models[i] = new ReplaceOneModel<Page>(
-                        Builders<Page>.Filter.Where(x => x.PageUri == item.PageUri),
-                        item
+                models[i] = new ReplaceOneModel<PageDto>(
+                        Builders<PageDto>.Filter.Where(x => x._id == item._id),
+                        (PageDto)item
                     )
                 { IsUpsert = true };
             };
             await collection.BulkWriteAsync(models);
         }
-        public async Task DeletePageAsync(string pageRef)
+        public async Task DeletePageAsync(string id)
         {
-            var collection = Context.Database.GetCollection<Page>("Pages");
+            var collection = Context.Database.GetCollection<PageDto>("Pages");
             await collection.DeleteOneAsync(
-                Builders<Page>.Filter.Where(d => d.PageRef == pageRef));
+                Builders<PageDto>.Filter.Where(d => d._id == id));
         }
         #endregion
     }

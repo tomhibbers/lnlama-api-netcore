@@ -14,14 +14,14 @@ namespace LNLamasAPI.Repository
             var client = new MongoClient(settings.Value.ConnectionString);
             Database = client.GetDatabase(settings.Value.Database);
         }
-        public IMongoQueryable<Series> SeriesLinq => Database.GetCollection<Series>("Series").AsQueryable();
-        public IMongoCollection<Series> SeriesItems => Database.GetCollection<Series>("Series");
+        public IMongoQueryable<SeriesDto> SeriesLinq => Database.GetCollection<SeriesDto>("Series").AsQueryable();
+        public IMongoCollection<SeriesDto> SeriesItems => Database.GetCollection<SeriesDto>("Series");
 
-        public IMongoQueryable<Chapter> ChaptersLinq => Database.GetCollection<Chapter>("Chapters").AsQueryable();
-        public IMongoCollection<Chapter> ChaptersItems => Database.GetCollection<Chapter>("Chapters");
+        public IMongoQueryable<ChapterDto> ChaptersLinq => Database.GetCollection<ChapterDto>("Chapters").AsQueryable();
+        public IMongoCollection<ChapterDto> ChaptersItems => Database.GetCollection<ChapterDto>("Chapters");
 
-        public IMongoQueryable<Page> PagesLinq => Database.GetCollection<Page>("Pages").AsQueryable();
-        public IMongoCollection<Page> PagesItems => Database.GetCollection<Page>("Pages");
+        public IMongoQueryable<PageDto> PagesLinq => Database.GetCollection<PageDto>("Pages").AsQueryable();
+        public IMongoCollection<PageDto> PagesItems => Database.GetCollection<PageDto>("Pages");
     }
 
 }

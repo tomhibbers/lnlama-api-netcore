@@ -43,6 +43,12 @@ namespace LNLamasAPI
             {
                 c.SwaggerDoc("v1", new Info { Title = "LNLamas API", Version = "v1" });
             });
+            services.AddCors();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAnyOrigin",
+                    builder => builder.WithOrigins().AllowAnyOrigin());
+            });
         }
         
 
@@ -52,6 +58,7 @@ namespace LNLamasAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseCors(b => b.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
             }
             else
             {
@@ -67,6 +74,7 @@ namespace LNLamasAPI
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "LNLamas API V1");
             });
             app.UseHttpsRedirection();
+
             app.UseMvc();
         }
     }
